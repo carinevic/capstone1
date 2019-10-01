@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs")
 const usersCollection = require('../db').db().collection("users")
 const validator = require("validator")
+const md5 = require('md5')
 
 
 let User = function(data){
@@ -20,7 +21,7 @@ User.prototype.cleanup = function(){
         password:this.data.password
     }
 }
-User.prototype.validate =function(){
+User.prototype.validate =  function(){
     return new Promise(async (resolve,reject)=>{
         if(this.data.username ==""){this.errors.push("you must provide a username")}
         if(this.data.username !=="" && !validator.isAlphanumeric(this.data.username)){this.errors.push("username can only be letters and numbers.")}
@@ -43,7 +44,7 @@ User.prototype.validate =function(){
             if(emailExists){this.errors.push("that email is already taken")}
         
         }
-        resolve
+        resolve()
         }
         )
 }
@@ -52,6 +53,8 @@ User.prototype.login = function(){
     this.cleanup()
     usersCollection.findOne({username: this.data.username}).then((attemptedUser) =>{
         if(attemptedUser && bcrypt.compareSync(this.data.password,attemptedUser.password)){
+            this.data = attemptedUser
+            this.getAvatar()
             resolve("congrats")
   
           }else{
@@ -67,7 +70,7 @@ User.prototype.login = function(){
 
    
 }
-User.prototype.register = function(){
+User.prototype.register =  function(){
     return new Promise(async (resolve,reject) =>{
         //step 1: validate user data
         this.cleanup()
@@ -81,6 +84,7 @@ User.prototype.register = function(){
             let salt = bcrypt.genSaltSync(10)
             this.data.password = bcrypt.hashSync(this.data.password, salt)
             await usersCollection.insertOne(this.data)
+            this.getAvatar()
             resolve()
         }else{
             reject(this.errors)
@@ -90,6 +94,9 @@ User.prototype.register = function(){
         
 }
 
+User.prototype.getAvatar = function(){
+    this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
+}
 
 
 

@@ -114,7 +114,7 @@ User.findByUsername = function(username){
                  username: userDoc.data.username,
                  avatar: userDoc.avatar
              }
-             resolve()
+             resolve(userDoc)
          }else{
              reject()
          }
